@@ -24,12 +24,11 @@ import (
 // NOTE: json tags are required.  Any new fields you add must have json tags for the fields to be serialized.
 
 // PasswordSpec defines the desired state of Password
+
+// description here!!
 type PasswordSpec struct {
 	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
 	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of Password. Edit password_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
 }
 
 // PasswordStatus defines the observed state of Password

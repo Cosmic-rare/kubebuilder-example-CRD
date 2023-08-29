@@ -58,9 +58,13 @@ func (r *PasswordReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 
 	// Fetch Password object
 	var password secretv1alpha1.Password
-	if err := r.Get(ctx, req.NamespacedName, &password); err != nil {
+	err := r.Get(ctx, req.NamespacedName, &password)
+	if errors.IsNotFound(err) {
+		return ctrl.Result{}, nil
+	}
+	if err != nil {
 		logger.Error(err, "Fetch Password object - failed")
-		return ctrl.Result{}, client.IgnoreNotFound(err)
+		return ctrl.Result{}, nil
 	}
 
 	logger.Info("Fetch Password object - succeeded", "password", password.Name, "createdAt", password.CreationTimestamp)
@@ -72,6 +76,13 @@ func (r *PasswordReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 			// Create Secret
 			logger.Info("Create Secret object if not exists - create secret")
 			secret := newSecretFromPassword(&password)
+
+			err := ctrl.SetControllerReference(&password, secret, r.Scheme) // Set owner of this Secret
+			if err != nil {
+				logger.Error(err, "Create Secret object if not exists - failed to set SetControllerReference")
+				return ctrl.Result{}, err
+			}
+
 			err = r.Create(ctx, secret)
 			if err != nil {
 				logger.Error(err, "Create Secret object if not exists - failed to create Secret")
@@ -93,6 +104,7 @@ func (r *PasswordReconciler) Reconcile(ctx context.Context, req ctrl.Request) (c
 func (r *PasswordReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&secretv1alpha1.Password{}).
+		Owns(&corev1.Secret{}).
 		Complete(r)
 }
 
